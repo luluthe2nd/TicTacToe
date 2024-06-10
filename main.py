@@ -3,9 +3,9 @@ import pygame
 pygame.init()
 
 SCREEN_WIDTH = 150
-SCREEN_HEIGH = 150
+SCREEN_HEIGHT = 150
 
-screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGH))
+screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption("TicTacToe")
 
 BLACK = (0,0,0)
@@ -21,24 +21,29 @@ class Block(pygame.sprite.Sprite):
         self.image = pygame.image.load(new_image_path)
         self.rect = self.image.get_rect(topleft=self.rect.topleft)
 
-    def get_position(self):
-        return self.rect.topleft
-
-
-blank_image_path = 'blank.png'
-cross_image_path = 'cross.png'
-circle_image_path = 'circle.png'
+blank_image_path = 'assets/images/blank.png'
+cross_image_path = 'assets/images/cross.png'
+circle_image_path = 'assets/images/circle.png'
+music_image_path = 'assets/images/music.png'
+musicMute_image_path = 'assets/images/musicMute.png'
+sound_image_path = 'assets/images/sound.png' 
+soundMute_image_path = 'assets/images/soundMute.png' 
+play_image_path = 'assets/images/play.png'   
 
 pygame.font.init()
 font = pygame.font.Font(None, 24)
 win_text = ''
 
-pygame.mixer.music.load('Tequila.mp3')
+pygame.mixer.music.load('assets/sounds/Tequila.mp3')
 pygame.mixer.music.play(-1)
 pygame.mixer.music.set_volume(0.2)
 
-click = pygame.mixer.Sound('click.wav')
+click = pygame.mixer.Sound('assets/sounds/click.wav')
 click.set_volume(0.8)
+
+menuSound = Block(sound_image_path, (50,0))
+menuMusic = Block(music_image_path, (50,50)) 
+menuPlay = Block(play_image_path, (50,100))
 
 block1 = Block(blank_image_path, (0,0))
 block2 = Block(blank_image_path, (50,0))
@@ -56,18 +61,66 @@ all_sprites = pygame.sprite.Group(
     block1, block2, block3, block4, block5, block6, block7, block8, block9
 )
 
-run = True
+menu_sprites = pygame.sprite.Group(
+    menuSound, menuMusic, menuPlay
+)
+
+game = True
 game_over = False
+menu = True
+sound = True
+music = True
 
 game_turn = 1
 
 blockStatus1 = blockStatus2 = blockStatus3 = blockStatus4 = blockStatus5 = blockStatus6 = blockStatus7 = blockStatus8 = blockStatus9 = 0
 
-while run:
+while menu:
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            run = False  
+            menu = game = False 
+
+        elif event.type == pygame.MOUSEBUTTONDOWN and not game_over:
+            mouse_pos = pygame.mouse.get_pos()
+            click.play()
+            if menuPlay.rect.collidepoint(mouse_pos):
+                menu = False
+
+            elif menuSound.rect.collidepoint(mouse_pos):
+                if sound == True:
+                    click.set_volume(0.0)
+                    sound = False
+                    menuSound.change_image(soundMute_image_path)
+                elif sound == False:
+                    click.set_volume(0.8)
+                    sound = True
+                    menuSound.change_image(sound_image_path)
+
+            elif menuMusic.rect.collidepoint(mouse_pos):
+                if music == True:
+                    pygame.mixer.music.set_volume(0.0)
+                    music = False
+                    menuMusic.change_image(musicMute_image_path)
+                elif music == False:
+                    pygame.mixer.music.set_volume(0.2)
+                    music = True
+                    menuMusic.change_image(music_image_path)
+
+    screen.fill((BLACK))
+
+    all_sprites.draw(screen)
+    menu_sprites.draw(screen)
+
+    pygame.display.flip()
+
+    pygame.time.Clock().tick(60)
+
+while game:
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            game = False  
 
         elif event.type == pygame.MOUSEBUTTONDOWN and not game_over:
             mouse_pos = pygame.mouse.get_pos()
@@ -229,7 +282,7 @@ while run:
 
     if game_over:
         text_surface = font.render(win_text, True, BLACK)
-        text_rect = text_surface.get_rect(center=(SCREEN_HEIGH // 2, SCREEN_WIDTH // 2))
+        text_rect = text_surface.get_rect(center=(SCREEN_HEIGHT // 2, SCREEN_WIDTH // 2))
         screen.blit(text_surface, text_rect)
 
     pygame.display.flip()
